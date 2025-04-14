@@ -8,6 +8,9 @@ import os
 import tempfile
 from datetime import datetime
 
+from cloud_tool import create_embedding, create_model_config
+from utils import create_dataframe, find_relevant_content
+
 
 # Set page config
 st.set_page_config(page_title="PDF RAG Chatbot", layout="wide")
@@ -49,12 +52,8 @@ with st.sidebar:
         api_key = ""
         st.warning("No API key found in Streamlit secrets. Please enter your key below.")
     
-    # api_key = st.text_input("Enter your Google API Key:", 
-    #                        type="password",
-    #                        value=default_value)
     
     if api_key:
-        st.session_state.api_key = api_key
         # Configure the Google API
         genai.configure(api_key=api_key)
     else:
@@ -84,16 +83,10 @@ with st.sidebar:
                     
                     st.info(f"Split PDF into {len(text_contents)} chunks")
                     
-                    # Create embeddings
-                    model = 'models/embedding-001'
                     content_and_embeddings = []
                     
                     for i, text in enumerate(text_contents):
-                        embedding_result = genai.embed_content(
-                            model=model,
-                            content=text,
-                            task_type="retrieval_query"
-                        )
+                        embedding_result = create_embedding(text)
                         embedding_values = embedding_result['embedding']
                         content_and_embeddings.append({
                             "text": text,
@@ -101,10 +94,7 @@ with st.sidebar:
                         })
                     
                     # Create DataFrame
-                    df = pd.DataFrame([{
-                        "Text": item["text"],
-                        "Embedding": item["embedding"]
-                    } for item in content_and_embeddings])
+                    df = create_dataframe(content_and_embeddings)
                     
                     # Store in session state
                     st.session_state.df = df
@@ -123,39 +113,6 @@ with st.sidebar:
     else:
         st.info("Please upload and process a PDF before asking questions.")
 
-# Functions for RAG
-def find_relevant_content(query, df, top_k=3):
-    """Find the most relevant chunks from the DataFrame based on embedding similarity"""
-    # Get embedding for the query
-    query_embedding_result = genai.embed_content(
-        model='models/embedding-001',
-        content=query,
-        task_type="retrieval_query"
-    )
-    query_embedding = query_embedding_result['embedding']
-    
-    # Convert embeddings to numpy arrays for faster computation
-    query_embedding_np = np.array(query_embedding)
-    
-    # Calculate similarity scores (cosine similarity)
-    similarities = []
-    for _, row in df.iterrows():
-        doc_embedding_np = np.array(row['Embedding'])
-        
-        # Calculate cosine similarity
-        similarity = np.dot(doc_embedding_np, query_embedding_np) / (
-            np.linalg.norm(doc_embedding_np) * np.linalg.norm(query_embedding_np)
-        )
-        similarities.append(similarity)
-    
-    # Add similarities to the dataframe
-    df_with_scores = df.copy()
-    df_with_scores['similarity'] = similarities
-    
-    # Sort by similarity and get top k results
-    top_results = df_with_scores.sort_values('similarity', ascending=False).head(top_k)
-    
-    return top_results
 
 def answer_question_with_rag(query, df):
     """Answer a question using RAG (Retrieval Augmented Generation)"""
@@ -170,29 +127,22 @@ def answer_question_with_rag(query, df):
     
     # Create prompt with context
     prompt = f"""
-    You are a helpful assistant that answers questions based on the provided context.
+        You are an intelligent and professional assistant specializing in analyzing PDF documents, particularly resumes and structured documents, or any kind of documents. 
+        Your task is to read the following context and accurately answer the question provided, using only the information contained in the context.
+
+        Please be clear, concise, and relevant in your response — as if you're an experienced HR professional or document reviewer.
+
+        CONTEXT:
+        {context}
+
+        QUESTION:
+        {query}
+
+        ANSWER:
+        """
+
     
-    CONTEXT:
-    {context}
-    
-    QUESTION:
-    {query}
-    
-    ANSWER:
-    """
-    
-    # Create a new model instance
-    generation_config = {
-        "temperature": 0.7,
-        "top_p": 0.95,
-        "top_k": 40,
-        "max_output_tokens": 8192,
-    }
-    
-    response_model = genai.GenerativeModel(
-        model_name="gemini-1.5-pro",
-        generation_config=generation_config,
-    )
+    response_model = create_model_config()
     
     # Generate response
     response = response_model.generate_content(prompt)
