@@ -6,6 +6,8 @@ from langchain.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import os
 import tempfile
+from datetime import datetime
+
 
 # Set page config
 st.set_page_config(page_title="PDF RAG Chatbot", layout="wide")
@@ -201,7 +203,7 @@ def answer_question_with_rag(query, df):
     }
 
 # Chat interface
-st.header("Ask questions about your PDF")
+# st.header("Ask questions about your PDF")
 
 # Add Clear Chat button
 col1, col2 = st.columns([4, 1])
@@ -245,3 +247,31 @@ if query := st.chat_input("Ask a question about the uploaded PDF"):
         
         # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": result['answer']})
+
+# Footer with copyright notice
+# Persistent footer at the bottom of the screen
+current_year = datetime.now().year
+st.markdown(
+    f"""
+    <style>
+    .footer {{
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: #fafafa;
+        text-align: center;
+        font-size: 0.8em;
+        color: #666;
+        z-index: 100;
+        border-top: 1px solid #ddd;
+    }}
+    </style>
+    <div class="footer">
+        &copy; {current_year} PDF Q&A Chatbot. All rights reserved.<br>
+        <small>Developer: <a href="javascript:void(0);" 
+        title="Abhisek Soni" style="text-decoration:none;color:#888;">AS</a></small>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
