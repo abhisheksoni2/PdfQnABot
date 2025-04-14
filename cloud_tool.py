@@ -19,8 +19,12 @@ def create_model_config():
     return response_model
 
 def create_embedding(text):
-    genai.embed_content(
-        model=EMBEDDING_MODEL,
-        content=text,
-        task_type="retrieval_query"
-    )
+    try:
+        embedding = genai.embed_content(
+            model=EMBEDDING_MODEL,
+            content=text,
+            task_type="retrieval_query"
+        )
+        return embedding
+    except Exception as e:
+        raise ValueError(f"Error creating embedding: {str(e)}")

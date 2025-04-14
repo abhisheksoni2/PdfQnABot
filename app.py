@@ -67,7 +67,7 @@ with st.sidebar:
         with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
             tmp_file.write(uploaded_file.getvalue())
             pdf_path = tmp_file.name
-        
+        print("loading pdf done.....")
         # Process button
         if st.button("Process PDF"):
             with st.spinner("Processing PDF... This may take a while."):
@@ -75,7 +75,7 @@ with st.sidebar:
                     # Load the PDF
                     loader = PyPDFLoader(pdf_path)
                     documents = loader.load()
-                    
+                    print("document loading.....")
                     # Split text into chunks
                     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
                     texts = text_splitter.split_documents(documents)
@@ -84,7 +84,6 @@ with st.sidebar:
                     st.info(f"Split PDF into {len(text_contents)} chunks")
                     
                     content_and_embeddings = []
-                    
                     for i, text in enumerate(text_contents):
                         embedding_result = create_embedding(text)
                         embedding_values = embedding_result['embedding']
@@ -92,10 +91,10 @@ with st.sidebar:
                             "text": text,
                             "embedding": embedding_values
                         })
-                    
+                    print("embedding done.....")
                     # Create DataFrame
                     df = create_dataframe(content_and_embeddings)
-                    
+                    print("dataframe done.....")
                     # Store in session state
                     st.session_state.df = df
                     st.session_state.pdf_processed = True
