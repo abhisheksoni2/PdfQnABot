@@ -28,14 +28,35 @@ st.title("PDF Q&A Chatbot")
 # Sidebar for API key and PDF upload
 with st.sidebar:
     st.header("Settings")
-    secret  = st.secrets["GEMINI_API_KEY"]
-    api_key = st.text_input("Enter your Google API Key:", type="password", 
-                           value=secret if 'api_key' not in st.session_state else st.session_state.api_key)
+    # Try to get API key from secrets, handle case when not available
+    try:
+        secret = st.secrets["GEMINI_API_KEY"]
+        has_secret = True
+    except Exception:
+        secret = ""
+        has_secret = False
+    
+    # If we have a stored key in session state, use that, 
+    # otherwise use the secret if available
+    if 'api_key' in st.session_state:
+        default_value = st.session_state.api_key
+    else:
+        default_value = secret if has_secret else ""
+    
+    # Show input field with appropriate help text
+    if not has_secret:
+        st.info("No API key found in Streamlit secrets. Please enter your key below.")
+    
+    api_key = st.text_input("Enter your Google API Key:", 
+                           type="password",
+                           value=default_value)
     
     if api_key:
         st.session_state.api_key = api_key
         # Configure the Google API
         genai.configure(api_key=api_key)
+    else:
+        st.warning("Please provide a Google API key to continue.")
     
     st.header("Upload PDF")
     uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
