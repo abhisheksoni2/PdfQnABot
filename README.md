@@ -1,5 +1,7 @@
 # 🤖 PDF Q&A Chatbot with RAG & Generative AI
 
+**Live App: [https://pdfanalyser-ai.streamlit.app/](https://pdfanalyser-ai.streamlit.app/)**
+
 In today's information-rich world, extracting meaningful insights from documents is more important than ever. This intelligent PDF Q&A chatbot leverages cutting-edge **Retrieval-Augmented Generation (RAG)** and **Generative AI** to transform how users interact with PDFs.
 
 ---
