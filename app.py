@@ -2,8 +2,10 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import google.generativeai as genai
-from langchain.document_loaders import PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+# from langchain.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
+# from langchain_community.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 import os
 import tempfile
 from datetime import datetime
